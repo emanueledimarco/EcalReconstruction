@@ -25,7 +25,7 @@
 #include "Geometry/CaloTopology/interface/CaloTopology.h"
 #include "Geometry/CaloTopology/interface/CaloSubdetectorTopology.h"
 #include "Geometry/Records/interface/CaloGeometryRecord.h"
-#include "Geometry/CaloEventSetup/interface/CaloTopologyRecord.h"
+#include "Geometry/Records/interface/CaloTopologyRecord.h"
 #include "RecoCaloTools/Navigation/interface/CaloNavigator.h"
 
 #include "EcalReconstruction/EcalTools/interface/CmsTree.h"

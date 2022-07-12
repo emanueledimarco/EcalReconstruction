@@ -53,9 +53,12 @@ class PulseDump : public edm::one::EDAnalyzer<> {
                         const uint32_t& status  );  
   
   edm::ESHandle<EcalPedestals> peds;
+  edm::ESGetToken<EcalPedestals, EcalPedestalsRcd> pedsToken_;
   edm::ESHandle<EcalGainRatios>  gains;    
-   
+  edm::ESGetToken<EcalGainRatios, EcalGainRatiosRcd> gainsToken_; 
   edm::ESHandle<EcalChannelStatus> chStatus;
+  edm::ESGetToken<EcalChannelStatus, EcalChannelStatusRcd> chStatusToken_;
+
   std::vector<int> v_chstatus_;  
   uint32_t flagmask_; // do not propagate channels with these flags on
   // Associate reco flagbit ( outer vector) to many db status flags (inner vector)

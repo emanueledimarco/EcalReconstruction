@@ -158,11 +158,11 @@ def doSpam(text,x1,y1,x2,y2,align=12,fill=False,textSize=0.033,textColor=ROOT.kB
 def printCanvas(c1, name, text=[], colors=[], options=None,textSize=0.03,sim=True):
 
     if sim:
-        doSpam("#bf{CMS} #it{Simulation}", 0.12, 0.91, 0.55, 0.98, 12, textSize=0.05)
-        doSpam("(13 TeV)", .55, .91, .95, .98, 32, textSize=0.05)
+        doSpam("#bf{CMS} #it{Simulation}", 0.12, 0.91, 0.55, 0.98, 12, textSize=0.06)
+        doSpam("(13 TeV)", .55, .91, .95, .98, 32, textSize=0.06)
     else:
-        doSpam("#bf{CMS}", 0.12, 0.91, 0.55, 0.98, 12, textSize=0.05)
-        doSpam("6 fb^{-1} (13 TeV)", .55, .91, .95, .98, 32, textSize=0.05)
+        doSpam("#bf{CMS}", 0.12, 0.91, 0.55, 0.98, 12, textSize=0.06)
+        doSpam("6 fb^{-1} (13 TeV)", .55, .91, .95, .98, 32, textSize=0.06)
     
     y0 = 0.85 - textSize*1.8
     for il,line in enumerate(text):
@@ -190,7 +190,7 @@ if __name__ == "__main__":
 
     
 #    bins_et = [1,5,10,30,100]; ranges_etacoarse = [[(0.5,1.3),(0.2,1.4)], [(0.8,1.15),(0.6,1.2)], [(0.85,1.1),(0.7,1.1)], [(0.94,1.04),(0.85,1.1)]]
-    bins_et = [1,5,10,30,100]; ranges_etacoarse = [[(0.5,1.3),(0.2,1.7)], [(0.8,1.15),(0.4,1.3)], [(0.85,1.1),(0.6,1.2)], [(0.94,1.04),(0.75,1.15)]]
+    bins_et = [1,5,10,30,50,70,100]; ranges_etacoarse = [[(0.5,1.3),(0.2,1.7)], [(0.8,1.15),(0.4,1.3)], [(0.85,1.1),(0.6,1.2)], [(0.94,1.04),(0.75,1.15)], [(0.94,1.04),(0.75,1.15)], [(0.94,1.04),(0.75,1.15)]]
     bins_etafine   = [0,0.43,0.8,1.23,1.4442,1.566,1.8,2.0,2.5,3.0]
     bins_etacoarse = [0,1.5,2.5]; 
 
@@ -226,7 +226,7 @@ if __name__ == "__main__":
     # superimpose weights / MF
     resolVsEt = ROOT.TH1F('resolVsEt','',len(bins_et)-1,array('f',bins_et))
     resolVsEt.GetXaxis().SetTitle('#it{p}_{T} (GeV)')
-    resolVsEt.GetYaxis().SetTitle('Effective resolution (%)')
+    resolVsEt.GetYaxis().SetTitle('Effective energy resolution (%)')
     resolVsEt.SetMarkerStyle(ROOT.kFullSquare)
     resolVsEt.SetMarkerSize(1)
     
@@ -282,7 +282,6 @@ if __name__ == "__main__":
             printPlot(frames, namereso, text, colors)
 
             
-
     # resolution vs ET
     # split EB/EE
     for subd in ['EB','EE']:
@@ -292,7 +291,7 @@ if __name__ == "__main__":
             label = '{reco}'.format(reco=k.split('_')[0])
             labels.append(label)
             plots.append(h)
-            styles.append('pe')
+            styles.append('pl')
             ## just sort the legend in the same way for EB/EE
             if labels[0]=='multifit':
                 labels.reverse(); plots.reverse(); styles.reverse()

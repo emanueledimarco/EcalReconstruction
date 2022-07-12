@@ -10,30 +10,30 @@ from PlotUtils import customROOTstyle, customPalette, doLegend
 
 SAFE_COLOR_LIST=[
 rt.kBlack, rt.kRed, rt.kGreen+2, rt.kBlue, rt.kMagenta+1, rt.kOrange+7, rt.kCyan+1, rt.kGray+2, rt.kViolet+5, rt.kSpring+5, rt.kAzure+1, rt.kPink+7, rt.kOrange+3, rt.kBlue+3, rt.kMagenta+3, rt.kRed+2,
-]+range(11,40)
+]+list(range(11,40))
 
 class TagValidation:
 
     def loadTemplates(self,txtfile):
-        data = []
-        for line in open(txtfile,'r'):
-            data.append(line.split())
+        data = np.genfromtxt(txtfile, delimiter=' ')
         return data
     
-    def __init__(self,files,options):
+    def __init__(self,files,options,doEB=True):
+        self.doEB = doEB
         self._options = options
         self.timeICs = {}
         self.timeOffsets = {}
         keys = ["current","ref"]
         tags = dict(zip(keys,files))
         self._allData = {}
-        for k,v in tags.iteritems():
+        for k,v in tags.items():
             self._allData[k] = self.loadTemplates(v)
         self.ringmap = etaRingMapping()
         if "/AlphaBetaFitter_cc.so" not in rt.gSystem.GetLibraries():
-            print "Load C++ Fitter"
-            rt.gROOT.ProcessLine(".L AlphaBetaFitter.cc+")
-        self.abfitter = rt.AlphaBetaFitter();
+            print("Load C++ Fitter")
+            ph = os.path.abspath(os.environ['CMSSW_BASE']+'/src/EcalReconstruction/EcalTools/macro/AlphaBetaFitter.cc')
+            rt.gROOT.ProcessLine(f".L {ph}+")
+        self.abfitter = rt.AlphaBetaFitter(doEB);
 
     def setTimeOffset(self,ebval,eeval):
         self.timeOffsets['EB'] = ebval
@@ -42,16 +42,18 @@ class TagValidation:
     def parseDic(self,rawdata):
         mydata = {}
         for item in rawdata:
-            key = (item[0],item[1])
+            key = item[4]
+            coor = item[:4]
+            coor[0] = coor[3]==0
             val = item[-12:]
-            mydata[key] = val
+            mydata[key] = {"samples" : val, "coor" : coor}
         return mydata
 
     def printOnePlot(self, plot, canvas, outputName, drawopt="",profileY=False):
         fdir = self._options.printDir if hasattr(self._options,"printDir") else "./"
         if not os.path.exists(fdir):
             os.makedirs(fdir);
-        if os.path.exists("/afs/cern.ch"): os.system("cp /afs/cern.ch/user/g/gpetrucc/php/index.php "+fdir)
+        #if os.path.exists("/afs/cern.ch"): os.system("cp /afs/cern.ch/user/g/gpetrucc/php/index.php "+fdir)
         canvas.cd()
         if "TGraph" in plot.ClassName():
             canvas.SetLeftMargin(0.20)
@@ -74,8 +76,8 @@ class TagValidation:
             else:
                 profY = rt.TProfile("%s_profIring" % plot.GetName(),"", 39, 0, 38, "s")
                 z=1 if "plus" in outputName else -1
-                for xbin in xrange(plot.GetNbinsX()+1):
-                    for ybin in xrange(plot.GetNbinsY()+1):
+                for xbin in range(plot.GetNbinsX()+1):
+                    for ybin in range(plot.GetNbinsY()+1):
                         iring = self.ringmap.getRing(False,xbin+1,ybin+1,z)
                         profY.Fill(iring,plot.GetBinContent(xbin,ybin))
                         profY.GetXaxis().SetTitle("#eta ring")
@@ -86,8 +88,8 @@ class TagValidation:
                 canvas.Print("%s/%s_profIEta.%s" % (fdir, outputName, ext))
                         
 
-    def do1dDiff(self,doEB):
-        part = 'eb' if doEB else 'ee'
+    def do1dDiff(self):
+        part = 'eb' if self.doEB else 'ee'
         rt.gStyle.SetOptStat(111111)
         refData = self.parseDic(self._allData["ref"])
         newData = self.parseDic(self._allData["current"])
@@ -96,32 +98,32 @@ class TagValidation:
             h = rt.TH1D(('%s_diff_1d_sample%d' % (part,s)),"",1000,-0.2,0.2)
             h.GetXaxis().SetTitle('sample_{%d}^{new}-sample_{%d}^{ref}' % (s,s))
             histos.append(h)
-        for (partition,detid),samples in refData.iteritems():
-            key = (partition,detid)
+        for key, data in refData.items():
+            partition = data['coor'][0]
             if key not in newData: continue
-            if ((doEB and int(partition)==0) or (not doEB and int(partition)==1)): continue
+            if ((self.doEB and int(partition)==0) or (not self.doEB and int(partition)==1)): continue
             for s in range(12):
-                histos[s].Fill(float((newData[key])[s])-float((refData[key])[s]))
-                if (self._options.debugOutliers and s==1 and abs(float((newData[key])[s])-float((refData[key])[s]))>0.1):
-                    print "big change for detid = ",detid
+                histos[s].Fill(float((newData[key])['samples'][s])-float((refData[key])['samples'][s]))
+                if (self._options.debugOutliers and s==1 and abs(float((newData[key])['samples'][s])-float((refData[key])['samples'][s]))>0.1):
+                    print("big change for detid = ",detid)
         canv = rt.TCanvas("c","",1200,1200)
         canv.SetLogy()
         for s in range(12):
             self.printOnePlot(histos[s],canv,'%s_diff_1d_sample%d' % (part,s))
 
-    def do2dDiff(self,doEB):
-        part = 'eb' if doEB else 'ee'
+    def do2dDiff(self):
+        part = 'eb' if self.doEB else 'ee'
         customROOTstyle()
         refData = self.parseDic(self._allData["ref"])
         newData = self.parseDic(self._allData["current"])
         histos = {}
-        if doEB: histos['eb'] = []
+        if self.doEB: histos['eb'] = []
         else: 
             histos['eeplus'] = []
             histos['eeminus'] = []
         for s in range(12): 
-            if doEB:
-                h = rt.TProfile2D(('%s_diff_2d_sample%d' % (part,s)),"",360,1,360,170,-85,85)
+            if self.doEB:
+                h = rt.TProfile2D(('%s_diff_2d_sample%d' % (part,s)),"",360,1,360,171,-85.5,85.5)
                 h.GetXaxis().SetTitle('i#phi')
                 h.GetYaxis().SetTitle('i#eta')
                 h.SetTitle('sample_{%d}^{new}-sample_{%d}^{ref}' % (s,s))
@@ -137,27 +139,25 @@ class TagValidation:
                 hminus = hplus.Clone('%s_minus_diff_2d_sample%d' % (part,s))
                 histos['eeminus'].append(hminus)
 
-        detids = EcalDetId('/afs/cern.ch/work/e/emanuele/public/ecal/pulseshapes_db/detids_ECAL.txt')
-
-        for (partition,detid),samples in refData.iteritems():
-            key = (partition,detid)
-            (x,y,z) = detids.xyz(detid)
+        for key, data in refData.items():
+            partition = data['coor'][0]
+            x,y,z = data['coor'][1:]
 
             if key not in newData: continue
-            if ((doEB and int(partition)==0) or (not doEB and int(partition)==1)): continue
+            if ((self.doEB and int(partition)==0) or (not self.doEB and int(partition)==1)): continue
             if z==-999: continue
             if z==0: htofill = histos['eb']
             elif z==1: htofill = histos['eeplus']
             else: htofill = histos['eeminus']
-            (ix,iy) = (y,x) if doEB else (x+1,y+1)
+            (ix,iy) = (y,x) if self.doEB else (x+1,y+1)
             for s in range(12):
-                htofill[s].Fill(ix,iy,float((newData[key])[s])-float((refData[key])[s]))
+                htofill[s].Fill(ix,iy,float(newData[key]['samples'][s])-float(data['samples'][s]))
 
         xsize = 1200
-        ysize = int(xsize*170/360+0.1*xsize) if doEB else int(xsize*0.9)
+        ysize = int(xsize*170/360+0.1*xsize) if self.doEB else int(xsize*0.9)
         canv = rt.TCanvas("c","",xsize,ysize)
 
-        for k,v in histos.iteritems():
+        for k,v in histos.items():
             for s in range(12):
                 #(histos[k])[s].Draw("colz")
                 #canv.SaveAs('%s_diff_2d_sample%d.pdf' % (k,s))
@@ -171,16 +171,17 @@ class TagValidation:
             ret[key] = val
         return ret
 
-    def do2dTime(self,currentTimeIC,doEB,newTimeIC=''):
-        part = 'EB' if doEB else 'EE'
+    def do2dTime(self,currentTimeIC, newTimeIC=''):
+        # FIXME
+        part = 'EB' if self.doEB else 'EE'
         customROOTstyle()
         refData = self.parseDic(self._allData["ref"])
         newData = self.parseDic(self._allData["current"])
         of = rt.TFile.Open('%s_timeVals.root' % part,'recreate')
         histos = []
         histosDiff = []
-        if doEB: 
-            h = rt.TProfile2D(('%s_time' % part),"",360,1,360,170,-85,85)
+        if self.doEB: 
+            h = rt.TProfile2D(('%s_time' % part),"",360,1,360,171,-85.5,85.5)
             h.GetXaxis().SetTitle('i#phi')
             h.GetYaxis().SetTitle('i#eta')
             h.SetTitle('Time (ns)')
@@ -207,24 +208,24 @@ class TagValidation:
 
         histo = rt.TH1F("histo","",15,0,15)
         cryfit = 0
-        for (partition,detid),samples in newData.iteritems():
+        for (partition,detid),samples in newData.items():
             key = (partition,detid)
             (x,y,z) = detids.xyz(detid)
 
             if detid not in self.timeICs: continue
-            if ((doEB and int(partition)==0) or (not doEB and int(partition)==1)): continue
+            if ((self.doEB and int(partition)==0) or (not self.doEB and int(partition)==1)): continue
             if z==0 or z==1: 
                 htofill = histos[0]
                 hdifftofill = histosDiff[0]
             else: 
                 htofill = histos[1]
                 hdifftofill = histosDiff[1]
-            (ix,iy) = (y,x) if doEB else (x,y)
+            (ix,iy) = (y,x) if self.doEB else (x,y)
 
             # fill the template and fit it
             for s in range(3):  histo.SetBinContent(s+1,0)
             for s in range(12): histo.SetBinContent(s+4,float((newData[key])[s]))
-            self.abfitter.fit(histo,doEB)
+            self.abfitter.fit(histo)
             results = {'pars': abfitter.getPars(), 'errs': abfitter.getErrs()}
             currentCorr = float(self.timeICs[detid]) + self.timeOffsets[part]
             time = 25.*((results['pars'])[2]-5.5)
@@ -238,11 +239,11 @@ class TagValidation:
                 # print '    correctedTime = ',correctedTime,"   newCorr = ",newCorr,"  diff = ", correctedTime - newCorr
                 hdifftofill.Fill(ix,iy,correctedTime - newCorr)
 
-            if cryfit % 1000 == 0: print 'fitted ',cryfit,' templates'
+            if cryfit % 1000 == 0: print('fitted ',cryfit,' templates')
             cryfit += 1
 
         xsize = 1200
-        ysize = int(xsize*170/360+0.1*xsize) if doEB else int(xsize*0.9)
+        ysize = int(xsize*170/360+0.1*xsize) if self.doEB else int(xsize*0.9)
         of.cd()
         canv = rt.TCanvas("c","",xsize,ysize)
         for h in histos:
@@ -254,14 +255,14 @@ class TagValidation:
             h.Write()
         of.Close()
 
-    def timeFit(self,pulse,abfitter,doEB):
+    def timeFit(self,pulse,abfitter):
         histo = rt.TH1F("time","",15,0,15)
         # fill the template and fit it
         for s in range(3):  histo.SetBinContent(s+1,0)
         for s in range(12): 
             histo.SetBinContent(s+4,float(pulse[s]))
             histo.SetBinError(s+4,float(pulse[s])/sqrt(1000)) # about 1k entries per bin
-        abfitter.fit(histo,doEB)
+        abfitter.fit(histo)
         results = {'pars': abfitter.getPars(), 'errs': abfitter.getErrs()}
         val = {}; err = {};
         for ip,par in enumerate(['alpha','beta','T0']):
@@ -273,18 +274,18 @@ class TagValidation:
         histo.Delete()
         return (val,err)
 
-    def do2dShapeDiff(self,doEB,absoluteShape=False):
-        part = 'EB' if doEB else 'EE'
+    def do2dShapeDiff(self, absoluteShape=False):
+        part = 'EB' if self.doEB else 'EE'
         customROOTstyle()
         refData = self.parseDic(self._allData["ref"])
         newData = self.parseDic(self._allData["current"])
-        of = rt.TFile.Open('%s_timeVals.root' % part,'recreate')
+        #of = rt.TFile.Open('%s_timeVals.root' % part,'recreate')
         histos = {}
         for ip,par in enumerate(['alpha','beta','T0']):
             (zmin,zmax) = (-0.03,0.03) if par!="T0" else (-1,1) # ns
             if par=="T0" and absoluteShape: (zmin,zmax) = (-5,5) # ns
-            if doEB:
-                h = rt.TProfile2D(('%s_%s' % (part,par)),"",360,1,360,170,-85,85)
+            if self.doEB:
+                h = rt.TProfile2D(('%s_%s' % (part,par)),"",360,1,360,171,-85.5,85.5)
                 h.GetXaxis().SetTitle('i#phi')
                 h.GetYaxis().SetTitle('i#eta')
                 h.SetTitle('Time (ns)' if par=="T0" else '#Delta #{par}/#{par}'.format(par=par))
@@ -302,21 +303,19 @@ class TagValidation:
                 hz.append(hminus)
                 histos[par] = hz
 
-        detids = EcalDetId('/afs/cern.ch/work/e/emanuele/public/ecal/pulseshapes_db/detids_ECAL.txt')
-
         cryfit = 0
-        for (partition,detid),samples in newData.iteritems():
-            key = (partition,detid)
-            (x,y,z) = detids.xyz(detid)
+        for key,data in newData.items():
+            partition = data['coor'][0]
+            x,y,z = data['coor'][1:]
 
             if not absoluteShape and key not in refData: continue
-            if ((doEB and int(partition)==0) or (not doEB and int(partition)==1)): continue
+            if ((self.doEB and int(partition)==0) or (not self.doEB and int(partition)==1)): continue
             if z==-999: continue
 
-            (ix,iy) = (y,x) if doEB else (x+1,y+1)
+            (ix,iy) = (y,x) if self.doEB else (x+1,y+1)
 
-            (val,err) = self.timeFit(newData[key],self.abfitter,doEB)
-            (valRef,errRef) = self.timeFit(refData[key],self.abfitter,doEB) if not absoluteShape else ({},{})
+            (val,err) = self.timeFit(data['samples'],self.abfitter)
+            (valRef,errRef) = self.timeFit(refData[key]['samples'],self.abfitter) if not absoluteShape else ({},{})
 
             for ip,par in enumerate(['alpha','beta','T0']):
                 if z==0 or z==1: 
@@ -329,29 +328,29 @@ class TagValidation:
                 #print "err1,2 = ",err[par]," ",errRef[par]
                 htofill.Fill(ix,iy,value)
 
-            if cryfit % 1000 == 0: print 'fitted ',cryfit,' templates'
+            if cryfit % 1000 == 0: print('fitted ',cryfit,' templates')
             cryfit += 1
 
         xsize = 1200
-        ysize = int(xsize*170/360+0.1*xsize) if doEB else int(xsize*0.9)
-        of.cd()
+        ysize = int(xsize*170/360+0.1*xsize) if self.doEB else int(xsize*0.9)
+        #of.cd()
         canv = rt.TCanvas("c","",xsize,ysize)
-        for k,hvect in histos.iteritems():
+        for k,hvect in histos.items():
             for h in hvect:
-                h.Write()
+                #h.Write()
                 self.printOnePlot(h,canv,'{name}{absolute}'.format(name=h.GetName(),absolute='_absolute' if absoluteShape else ''),"",True)
-        of.Close()
+        #of.Close()
 
     def historyPlot(self,detid,iovfiles):
         iovs = []
         for f in iovfiles: 
-            print "Looking for crystal with rawID = ",detid," in the IOV file ",f,"..."
+            print("Looking for crystal with rawID = ",detid," in the IOV file ",f,"...")
             data = self.parseDic(self.loadTemplates(f))
             pulsetemp = []
             for partition in ['0','1']:
                 key = (partition,detid)
                 if key in data: pulsetemp = data[key]
-            if len(pulsetemp)==0: print "ERROR! Crystal with detid = ",detid," not found in the IOV file ",f,". Skipping point."
+            if len(pulsetemp)==0: print("ERROR! Crystal with detid = ",detid," not found in the IOV file ",f,". Skipping point.")
             else: iovs.append(pulsetemp)
 
 
@@ -398,8 +397,8 @@ class TagValidation:
         for ext in self._options.printPlots.split(","):
             canvas.Print("%s/pulse_id%s.%s" % (fdir,detid,ext))
 
-    def do1dComparison(self,doEB,inputfile=None,maxPlots=10):
-        part = 'eb' if doEB else 'ee'
+    def do1dComparison(self,inputfile=None,maxPlots=10):
+        part = 'eb' if self.doEB else 'ee'
         rt.gStyle.SetOptStat(111111)
         refData = self.parseDic(self._allData["ref"])
         newData = self.parseDic(self._allData["current"])
@@ -407,14 +406,14 @@ class TagValidation:
         detidsToCheck=[]
         if inputfile: 
             detidsToCheck=[line.rstrip() for line in open(inputfile,'r')]
-            print "check ids = ",detidsToCheck
+            print("check ids = ",detidsToCheck)
 
         ipulse=0
-        for (partition,detid),samples in refData.iteritems():
+        for (partition,detid),samples in refData.items():
             key = (partition,detid)
             if key not in newData: continue
             if len(detidsToCheck)>0 and detid not in detidsToCheck: continue
-            if ((doEB and int(partition)==0) or (not doEB and int(partition)==1)): continue
+            if ((self.doEB and int(partition)==0) or (not self.doEB and int(partition)==1)): continue
             self.pulseComp(detid,newData[key],refData[key])
             if ipulse<maxPlots: ipulse += 1
             else: break
@@ -435,33 +434,33 @@ if __name__ == "__main__":
     parser.add_option(     "--debugOutliers", dest="debugOutliers", action="store_true", help="print the hashed index of crystals which have a variation larger than 10% in raising sample");
 
     (options, args) = parser.parse_args()
-    if len(args) < 2: raise RuntimeError, 'Expecting at least two arguments'
-
-    tv = TagValidation(args,options)
+    if len(args) < 2: raise(RuntimeError, 'Expecting at least two arguments')
 
     doEB = True if options.partition=='EB' else False
     
+    tv = TagValidation(args,options,doEB=doEB)
+
     if options.do1Ddiff:
-        tv.do1dDiff(doEB)
+        tv.do1dDiff()
 
     if options.do2Ddiff:
-        tv.do2dDiff(doEB)
+        tv.do2dDiff()
 
     if options.do2DShapeDiff:
-        tv.do2dShapeDiff(doEB)
+        tv.do2dShapeDiff()
 
     if options.do2DShape:
-        tv.do2dShapeDiff(doEB,absoluteShape=True)
+        tv.do2dShapeDiff(absoluteShape=True)
         
     if options.do1Dpulses:
         if len(args)==3:
-            print "using ",args[2]," as the list of crystals to display"
-            tv.do1dComparison(doEB,args[2])
+            print("using ",args[2]," as the list of crystals to display")
+            tv.do1dComparison(args[2])
         else: 
-            tv.do1dComparison(doEB)
+            tv.do1dComparison()
 
     currentTimeICs = '/afs/cern.ch/work/e/emanuele/public/ecal/timeICs_dump_EcalTimeCalibConstants__since_00253984_till_Run2016A.txt'
     if options.do2Dtime:
         # values in the GT 80X_dataRun2_Prompt_v8
         tv.setTimeOffset(-0.964168,0.347665)
-        tv.do2dTime(currentTimeICs,doEB,options.timeICs)
+        tv.do2dTime(currentTimeICs,options.timeICs)

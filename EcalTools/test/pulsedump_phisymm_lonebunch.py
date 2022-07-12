@@ -1,19 +1,10 @@
 import FWCore.ParameterSet.Config as cms
 import re
-process = cms.Process("PEDS")
+process = cms.Process("PulseDump")
 
 ######## configure here #######
-calcPedestalMean = False
-run = 211831
-barrel = True
-FEDused = "EB+13"
-Gain = 12
 LoneBunch = False
 ###############################
-
-templateOutputFile = str("templates_run"+str(run)+"_"+FEDused+"_Gain"+str(Gain)+".root")
-templateOutputFile = re.sub("\+","p", templateOutputFile)
-templateOutputFile = re.sub("\-","m", templateOutputFile)
 
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('FWCore.MessageService.MessageLogger_cfi')
@@ -21,19 +12,20 @@ process.load('Configuration.EventContent.EventContent_cff')
 process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
 process.load('Configuration.Geometry.GeometrySimDB_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
-process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
+process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load('Configuration.StandardSequences.RawToDigi_cff')
 process.load('Configuration.StandardSequences.Reconstruction_cff')
 
-process.maxEvents = cms.untracked.PSet(  input = cms.untracked.int32(-1) )
+process.maxEvents = cms.untracked.PSet(  input = cms.untracked.int32(5000) )
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 process.MessageLogger.suppressWarning = cms.untracked.vstring( "triggerSelectionLoneBunch" )
 
 process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )
 
-from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag as customiseGlobalTag
-#process.GlobalTag = customiseGlobalTag(process.GlobalTag, globaltag = 'auto:run2_hlt_GRun')
-process.GlobalTag.globaltag = "101X_dataRun2_v8"
+from Configuration.AlCa.GlobalTag import GlobalTag as customiseGlobalTag
+process.GlobalTag.globaltag = "123X_dataRun2_v1" #auto:run2_data
+#process.GlobalTag.globaltag = "123X_dataRun3_Prompt_v1" #auto:run3_data_prompt
+
 
 # process.GlobalTag = cms.ESSource("PoolDBESSource",
 #                                  DBParameters = cms.PSet(
@@ -77,7 +69,7 @@ process.GlobalTag.globaltag = "101X_dataRun2_v8"
 process.load('EcalReconstruction.EcalTools.pulseDump_cfi')
 
 process.source = cms.Source("PoolSource",
-                              fileNames = cms.untracked.vstring('/store/data/Commissioning2018/AlCaPhiSym/RAW/v1/000/314/094/00000/08094BC3-3A3E-E811-9ACB-FA163EAF9ADD.root')
+                              fileNames = cms.untracked.vstring('/store/data/Run2018D/AlCaPhiSym/RAW/v1/000/320/934/00000/94CFC099-1C9A-E811-8F6A-FA163E8A9748.root')
                             )
 
 process.TFileService = cms.Service("TFileService", fileName = cms.string("templates.root") )
@@ -86,13 +78,19 @@ process.TFileService = cms.Service("TFileService", fileName = cms.string("templa
 #process.raw2digi_step = cms.Sequence(process.RawToDigi)
 
 # reco
-process.load('RecoLocalCalo.Configuration.ecalLocalRecoSequence_cff')
-process.ecalLocalRecoSequenceAlCaStream = cms.Sequence (process.ecalMultiFitUncalibRecHit * process.ecalRecHit)
-process.ecalMultiFitUncalibRecHit.EBdigiCollection = cms.InputTag("hltEcalPhiSymFilter","phiSymEcalDigisEB")
-process.ecalMultiFitUncalibRecHit.EEdigiCollection = cms.InputTag("hltEcalPhiSymFilter","phiSymEcalDigisEE")
-process.ecalRecHit.killDeadChannels = False
-process.ecalRecHit.recoverEBFE = False
-process.ecalRecHit.recoverEEFE = False
+from RecoLocalCalo.EcalRecProducers.ecalMultiFitUncalibRecHit_cfi import ecalMultiFitUncalibRecHit
+process.ecalMultiFitUncalibRecHitStream = ecalMultiFitUncalibRecHit.clone()
+process.ecalMultiFitUncalibRecHitStream.EBdigiCollection = cms.InputTag("hltEcalPhiSymFilter","phiSymEcalDigisEB")
+process.ecalMultiFitUncalibRecHitStream.EEdigiCollection = cms.InputTag("hltEcalPhiSymFilter","phiSymEcalDigisEE")
+
+from RecoLocalCalo.EcalRecProducers.ecalRecHit_cfi import ecalRecHit
+process.ecalRecHitStream = ecalRecHit.clone()
+process.ecalRecHitStream.EBuncalibRecHitCollection = cms.InputTag("ecalMultiFitUncalibRecHitStream","EcalUncalibRecHitsEB")
+process.ecalRecHitStream.EEuncalibRecHitCollection = cms.InputTag("ecalMultiFitUncalibRecHitStream","EcalUncalibRecHitsEE")
+process.ecalRecHitStream.killDeadChannels = False
+process.ecalRecHitStream.recoverEBFE = False
+process.ecalRecHitStream.recoverEEFE = False
+process.ecalLocalRecoSequenceAlCaStream = cms.Sequence (process.ecalMultiFitUncalibRecHitStream * process.ecalRecHitStream)
 
 
 # TRIGGER RESULTS FILTER

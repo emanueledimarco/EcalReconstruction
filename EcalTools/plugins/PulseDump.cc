@@ -5,7 +5,7 @@
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterTools.h"
-#include "Geometry/CaloEventSetup/interface/CaloTopologyRecord.h"
+#include "Geometry/Records/interface/CaloTopologyRecord.h"
 #include "Geometry/CaloTopology/interface/CaloTopology.h"
 #include "Geometry/CaloTopology/interface/CaloSubdetectorTopology.h"
 #include "DataFormats/CaloRecHit/interface/CaloCluster.h"
@@ -18,7 +18,9 @@
 
 
 PulseDump::PulseDump(const edm::ParameterSet& conf)
-{
+  : pedsToken_(esConsumes()),
+    gainsToken_(esConsumes()),
+    chStatusToken_(esConsumes()) {
   
   // for AlCaP0 stream
   // ebDigiCollectionToken_ = consumes<EBDigiCollection>(edm::InputTag("dummyHits","dummyBarrelDigis"));
@@ -100,9 +102,9 @@ void PulseDump::analyze(const edm::Event& e, const edm::EventSetup& es) {
   run_ = e.id().run();
   lumi_ = e.luminosityBlock();
 
-  es.get<EcalGainRatiosRcd>().get(gains);
-  es.get<EcalPedestalsRcd>().get(peds); 
-  es.get<EcalChannelStatusRcd>().get(chStatus);
+  gains = es.getHandle(gainsToken_);
+  peds = es.getHandle(pedsToken_);
+  chStatus = es.getHandle(chStatusToken_);
   
   edm::Handle< EBDigiCollection > pEBDigis;
   edm::Handle< EEDigiCollection > pEEDigis;  

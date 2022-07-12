@@ -61,7 +61,7 @@ class TagFitter:
         myData = self.parseDic(self._data)
         ncry=0
         for (partition,detid),pulseshape in myData.items():
-            if int(partition)==0: continue
+            if int(partition)==1: continue
             if ncry % 1000 == 0: print("fitted ",ncry," pulse shapes")
             key = (partition,detid)
             normshape = self.getPeakNormalisedPulseShape(pulseshape,int(partition),detid)

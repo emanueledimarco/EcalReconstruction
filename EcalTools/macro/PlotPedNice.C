@@ -86,15 +86,16 @@ void PlotPedNice(){
   ped15->SetMarkerSize(2.0);
   ped16->SetMarkerSize(2.0);
 
-  ped0->GetXaxis()->SetTitleOffset(1.5);
+  ped0->GetXaxis()->SetTitleOffset(1.3);
   ped0->GetXaxis()->SetTitle("Date (year/month)");
   ped0->GetYaxis()->SetTitle("Noise (ADC counts)");
   ped0->GetXaxis()->SetTimeDisplay(1);
   ped0->GetXaxis()->SetNdivisions(406);
   ped0->GetXaxis()->SetLabelSize(0.04);
+  ped0->GetXaxis()->SetLabelOffset(0.02);
   ped0->GetYaxis()->SetLabelSize(0.04);
-  ped0->GetXaxis()->SetTitleSize(0.04);
-  ped0->GetYaxis()->SetTitleSize(0.04);
+  ped0->GetXaxis()->SetTitleSize(0.05);
+  ped0->GetYaxis()->SetTitleSize(0.05);
   ped0->GetYaxis()->SetDecimals();
 
   ped0->GetXaxis()->SetTimeFormat("%Y/%m");
@@ -159,30 +160,30 @@ void PlotPedNice(){
   lat.SetTextFont(42);
   lat.DrawLatex(0.16, 0.93, "#bf{CMS} ");
   lat.DrawLatex(0.60, 0.93, "159 fb^{-1} (13 TeV)");
-  lat.DrawLatex(0.65, 0.83, "Barrel");
-  auto legend = new TLegend(0.16,0.50,0.65,0.89,NULL,"brNDC");
+  lat.DrawLatex(0.68, 0.83, "Barrel");
+  auto legend = new TLegend(0.16,0.54,0.65,0.89,NULL,"brNDC");
   legend->SetBorderSize(0);
   legend->SetTextSize(0.035);
   legend->SetTextFont(42);
   legend->SetNColumns(2);
-  
-  legend->AddEntry("ped0","0.00#leq|#eta|<0.08","l");
-  legend->AddEntry("ped1","0.08#leq|#eta|<0.17","l");
+
+  legend->AddEntry("ped0","0.00#leq|#eta|<0.09","l");
+  legend->AddEntry("ped1","0.09#leq|#eta|<0.17","l");
   legend->AddEntry("ped2","0.17#leq|#eta|<0.26","l");
-  legend->AddEntry("ped3","0.26#leq|#eta|<0.34","l");
-  legend->AddEntry("ped4","0.34#leq|#eta|<0.43","l");
-  legend->AddEntry("ped5","0.43#leq|#eta|<0.51","l");
-  legend->AddEntry("ped6","0.51#leq|#eta|<0.60","l");
-  legend->AddEntry("ped7","0.60#leq|#eta|<0.68","l");
-  legend->AddEntry("ped8","0.68#leq|#eta|<0.77","l");
-  legend->AddEntry("ped9","0.77#leq|#eta|<0.85","l");
-  legend->AddEntry("ped10","0.85#leq|#eta|<0.94","l");
-  legend->AddEntry("ped11","0.94#leq|#eta|<1.02","l");
-  legend->AddEntry("ped12","1.02#leq|#eta|<1.11","l");
-  legend->AddEntry("ped13","1.11#leq|#eta|<1.19","l");
-  legend->AddEntry("ped14","1.19#leq|#eta|<1.28","l");
-  legend->AddEntry("ped15","1.28#leq|#eta|<1.36","l");
-  legend->AddEntry("ped16","1.36#leq|#eta|#leq1.45","l");
+  legend->AddEntry("ped3","0.26#leq|#eta|<0.35","l");
+  legend->AddEntry("ped4","0.35#leq|#eta|<0.43","l");
+  legend->AddEntry("ped5","0.43#leq|#eta|<0.52","l");
+  legend->AddEntry("ped6","0.52#leq|#eta|<0.61","l");
+  legend->AddEntry("ped7","0.61#leq|#eta|<0.70","l");
+  legend->AddEntry("ped8","0.70#leq|#eta|<0.78","l");
+  legend->AddEntry("ped9","0.78#leq|#eta|<0.87","l");
+  legend->AddEntry("ped10","0.87#leq|#eta|<0.96","l");
+  legend->AddEntry("ped11","0.96#leq|#eta|<1.04","l");
+  legend->AddEntry("ped12","1.04#leq|#eta|<1.13","l");
+  legend->AddEntry("ped13","1.13#leq|#eta|<1.22","l");
+  legend->AddEntry("ped14","1.22#leq|#eta|<1.31","l");
+  legend->AddEntry("ped15","1.31#leq|#eta|<1.39","l");
+  legend->AddEntry("ped16","1.39#leq|#eta|#leq1.48","l");
   legend->Draw();
 
   f.Close(); 
@@ -200,15 +201,16 @@ void PlotPedNice(){
    c2.SetBottomMargin(0.15);
    c2.SetTopMargin(0.10);
 
-   pedm0->GetXaxis()->SetTitleOffset(1.5);
+   pedm0->GetXaxis()->SetTitleOffset(1.3);
    pedm0->GetXaxis()->SetTitle("Date (year/month)");
    pedm0->GetYaxis()->SetTitle("Pedestal mean (ADC counts)");
    pedm0->GetXaxis()->SetTimeDisplay(1);
    pedm0->GetXaxis()->SetNdivisions(405);
    pedm0->GetXaxis()->SetLabelSize(0.04);
    pedm0->GetYaxis()->SetLabelSize(0.04);
-   pedm0->GetXaxis()->SetTitleSize(0.04);
-   pedm0->GetYaxis()->SetTitleSize(0.04);
+   pedm0->GetXaxis()->SetTitleSize(0.05);
+   pedm0->GetXaxis()->SetLabelOffset(0.02);
+   pedm0->GetYaxis()->SetTitleSize(0.05);
    pedm0->GetYaxis()->SetNdivisions(405);
    pedm0->GetYaxis()->SetTitleFont(42);
 
@@ -262,7 +264,7 @@ void PlotPedNice(){
    inset_pedm0->GetYaxis()->SetTitleSize(0.10);
 
 
-   inset_pedm0->GetXaxis()->SetTimeFormat("%Y/%m");
+   inset_pedm0->GetXaxis()->SetTimeFormat("%d");
    inset_pedm0->GetXaxis()->LabelsOption("v");
    inset_pedm0->GetXaxis()->SetTimeOffset(0,"gmt");
    inset_pedm0->GetXaxis()->SetRangeUser(1533427260.,1533427260.+2*24*60*60);
@@ -272,6 +274,12 @@ void PlotPedNice(){
    inset_pedm0->SetMinimum(204.0);
    inset_pedm0->SetMaximum(206.0);
    inset_pedm0->Draw("A P");
+
+   TLatex lat2;
+   lat2.SetNDC(); 
+   lat2.SetTextFont(42);
+   lat2.SetTextSize(0.1);
+   lat2.DrawLatex(0.45, 0.8, "August 2018");
 
    TGraph * inset_pedm1 = (TGraph*)pedm1->Clone("inset_pedm1");
    inset_pedm1->SetMarkerSize(1.0);

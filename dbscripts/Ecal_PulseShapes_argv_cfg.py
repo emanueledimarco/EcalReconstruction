@@ -5,20 +5,19 @@ import FWCore.ParameterSet.Config as cms
 POPULATE_MC = False
 FIRST_RUN_DATA = '2'
 
-if POPULATE_MC: suffix = "mc"
+if POPULATE_MC: run = "mc"
 else: 
-    suffix = sys.argv[2] # run range
-    prefix =  sys.argv[3] # txt file prefix
+    run     = sys.argv[2]
+    txtfile =  sys.argv[3] # txt file prefix
 
-txtfile = prefix+"_runs_"+suffix+".txt"
-
-print "reading txt file ",txtfile
+print("reading txt file ",txtfile)
 
 process = cms.Process("ProcessOne")
-process.load("CondCore.DBCommon.CondDBCommon_cfi")
-process.CondDBCommon.connect = 'sqlite_file:ecaltemplates_popcon_runs_'+suffix+'.db'
-process.CondDBCommon.DBParameters.authenticationPath = '.'
-process.CondDBCommon.DBParameters.messageLevel=cms.untracked.int32(1)
+#process.load("CondCore.DBCommon.CondDBCommon_cfi")
+process.load("CondCore.CondDB.CondDB_cfi")
+process.CondDB.connect = 'sqlite_file:ecaltemplates_popcon_run_'+run+'.db'
+process.CondDB.DBParameters.authenticationPath = '.'
+process.CondDB.DBParameters.messageLevel=cms.untracked.int32(1)
 
 process.MessageLogger = cms.Service("MessageLogger",
                                     debugModules = cms.untracked.vstring('*'),
@@ -33,8 +32,8 @@ process.source = cms.Source("EmptyIOVSource",
                             )
 
 process.PoolDBOutputService = cms.Service("PoolDBOutputService",
-    process.CondDBCommon,
-    logconnect = cms.untracked.string('sqlite_file:logecaltemplates_popcon_runs_'+suffix+'.db'),
+    process.CondDB,
+    logconnect = cms.untracked.string('sqlite_file:logecaltemplates_popcon_runs_'+run+'.db'),
     timetype = cms.untracked.string('runnumber'),
     toPut = cms.VPSet(cms.PSet(
         record = cms.string('EcalPulseShapesRcd'),
@@ -43,7 +42,7 @@ process.PoolDBOutputService = cms.Service("PoolDBOutputService",
 )
 
 if os.path.isfile(txtfile)==False:
-    print "WARNING: file ",txtfile," does not exist. Exiting... "
+    print("WARNING: file ",txtfile," does not exist. Exiting... ")
     exit
 
 process.Test1 = cms.EDAnalyzer("ExTestEcalPulseShapesAnalyzer",

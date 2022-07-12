@@ -27,8 +27,8 @@ def printOnePlot(frames, name, text=[], histopts=[], legend=None, sim=True, yaxM
         xax = frame.GetXaxis(); yax = frame.GetYaxis()
         xax.SetNdivisions(10,ROOT.kTRUE)
         xax.SetDecimals(1)    
-        xax.SetTitleOffset(1.1); xax.SetTitleSize(0.05); xax.SetLabelSize(0.05)
-        yax.SetTitleOffset(1.3); yax.SetTitleSize(0.05); yax.SetLabelSize(0.05)
+        xax.SetTitleOffset(1.1); xax.SetTitleSize(0.06); xax.SetLabelSize(0.06)
+        yax.SetTitleOffset(1.1); yax.SetTitleSize(0.06); yax.SetLabelSize(0.06)
         if len(histopts)==0:
             frame.Draw('' if iframe==0 else 'same')
         else:
@@ -73,8 +73,9 @@ def doPlot(hists,plotname):
         h.SetMinimum(0)
         
     genericOOT = hists[0].Clone('genericoot')
-    genericOOT.SetLineColor(ROOT.kGray+1)
+    genericOOT.SetLineColor(ROOT.kGray+2)
     genericOOT.SetLineStyle(3)
+    genericOOT.SetLineWidth(2)
     labeledHists[2] = genericOOT
 
     labels = ['Total','In-time','Out-of-time','Observed']
@@ -82,7 +83,7 @@ def doPlot(hists,plotname):
     plotopts = ['hist' for i in range(len(hists)-1)] + ['pe X0']
     
     leg = doLegend(labeledHists,labels,styles,legBorder=False,corner='TL',legWidth=0.25,textSize=0.050)
-    tt = ROOT.TLatex(0.25,0.52, '<PU>=20')
+    tt = ROOT.TLatex(0.25,0.52, '<PU> = 20')
     tt.SetNDC(); tt.SetTextFont(42)
     tt2 = ROOT.TLatex(0.83,0.79, 'Barrel' if 'EB' in plotname else 'Endcap')
     tt2.SetNDC(); tt2.SetTextFont(42)

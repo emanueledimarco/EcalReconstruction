@@ -89,7 +89,7 @@ void plotPi0vsBx() {
   mg_masse->Add(graph_mass) ;
   mg_masse->Add(graph_massM) ;
   mg_masse->Draw("ap") ;
-  mg_masse->GetYaxis()->SetTitle("#it{m}_{#gamma#gamma} / #it{m}_{#gamma#gamma}^{BX_{start}=1}") ;
+  mg_masse->GetYaxis()->SetTitle("#it{m}_{#gamma#gamma} / #it{m}_{#gamma#gamma}^{BX=1}") ;
   mg_masse->GetYaxis()->SetTitleOffset(1.3);
   mg_masse->GetYaxis()->SetDecimals(2);
 
@@ -112,6 +112,7 @@ void plotPi0vsBx() {
   lat.DrawLatex(0.20, 0.92, "#bf{CMS}");
   lat.DrawLatex(0.62, 0.92, "0.5 fb^{-1} (13 TeV)");
   lat.DrawLatex(0.35, 0.25, "Barrel");
+  lat.DrawLatex(0.25, 0.80, "#pi^{0}#rightarrow #gamma#gamma");
 
 
   leg->Draw();
@@ -194,6 +195,7 @@ void plotPi0SigmavsBx() {
   lat.DrawLatex(0.20, 0.92, "#bf{CMS}");
   lat.DrawLatex(0.62, 0.92, "0.5 fb^{-1} (13 TeV)");
   lat.DrawLatex(0.35, 0.25, "Barrel");
+  lat.DrawLatex(0.25, 0.80, "#pi^{0}#rightarrow #gamma#gamma");
 
 
   leg->Draw();

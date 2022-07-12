@@ -96,7 +96,7 @@ if __name__ == "__main__":
 
             covmat.GetXaxis().SetTitle('Time sample')
             covmat.GetYaxis().SetTitle('Time sample')
-            covmat.GetZaxis().SetTitle('{subdet}  #bf{{#rho}}_{{pulse}} (%)'.format(subdet = 'Barrel' if part=='EB' else 'Endcap') )
+            covmat.GetZaxis().SetTitle('{subdet}  #bf{{#rho}}_{{noise}} (%)'.format(subdet = 'Barrel' if part=='EB' else 'Endcap') )
             covmat.GetZaxis().CenterTitle()
             covmat.Draw("colz text45")
             lat.DrawLatex(0.16, 0.92, '#bf{CMS}')

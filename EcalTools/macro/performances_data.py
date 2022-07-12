@@ -259,11 +259,13 @@ if __name__ == "__main__":
         resolQuadDiffEta.SetLineColor(hist_colors['multifit'])
         
         for ieb in range(len(bins_eta)-1):
-            frames = []
+            frames = []; labels = []; styles = []
             text = ['5x5 clusters']; colors = [ROOT.kBlack]
             for lbl in recolabels:
                 key = (lbl,ieb)
                 frames.append(mass_etafine[key])
+                labels.append(lbl)
+                styles.append('pe')
                 resol = effSigma(mass_etafine[key])
                 median = getMedian(mass_etafine[key])
                 text.append("#sigma_{{ eff }}^{{ {label} }} / #it{{ m }} = {resol:.2f}%".format(resol=resol/ZMASS*100, label=lbl))
@@ -274,7 +276,8 @@ if __name__ == "__main__":
                 resolutionsEta[lbl].GetXaxis().SetTitle('max(|#eta_{1}|,|#eta_{2}|)')
                 resolutionsEta[lbl].GetYaxis().SetTitle("#sigma_{eff}^{m5x5}/m (%)")
             namereso = 'plots/compZ_abseta{eta1}to{eta2}'.format(eta1=bins_eta[ieb],eta2=bins_eta[ieb+1])
-            printPlot(frames, namereso, text, colors, sim=False, histopt='pe')
+            leg = doLegend(frames,labels,styles,legBorder=False,corner='BL')
+            printPlot(frames, namereso, text, colors, sim=False, histopt='pe', legend=leg)
             
         # resolution vs ETA
         plots = []; labels = []; styles = []

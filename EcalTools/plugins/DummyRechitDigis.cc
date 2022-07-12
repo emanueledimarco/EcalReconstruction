@@ -37,7 +37,7 @@
 // class declaration
 //
 
-class DummyRechitDigis : public edm::EDProducer {
+class DummyRechitDigis : public edm::global::EDProducer {
 public:
   explicit DummyRechitDigis(const edm::ParameterSet&);
   ~DummyRechitDigis();
